@@ -130,13 +130,9 @@ int _rpm_delta;
 void setError(ErrorCode code) {
   system_error = code;
   if (code) {
-    gpio_bit_write(LED_X1_2_PORT, LED_X1_2_PIN, RESET);
-    gpio_bit_write(LED_X1_3_PORT, LED_X1_3_PIN, SET);
     bldc_enable = false;
 
   } else {
-    gpio_bit_write(LED_X1_3_PORT, LED_X1_3_PIN, RESET);
-    gpio_bit_write(LED_X1_2_PORT, LED_X1_2_PIN, SET);
     bldc_enable = true;
   }
 }

@@ -31,16 +31,17 @@
 
 #include "stdio.h"
 #include "stdlib.h"
-#include "string.h"
-#include <math.h>     
-#define ARM_MATH_CM3
-#include "arm_math.h" 
+//#include "string.h"
+//#include <math.h>     
+//#define ARM_MATH_CM3
+//#include "arm_math.h" 
 
 #include "gd32f1x0.h"
 
-#include "setup.h"
+
 #include "defines.h"
 #include "config.h"
+#include "setup.h"
 #include "debug.h"
 #include "it.h"
 #include "bldc.h"
@@ -71,7 +72,7 @@ extern FlagStatus timedOut;								// Timeoutvariable set by timeout timer
 uint32_t inactivity_timeout_counter = 0;	// Inactivity counter
 uint32_t steerCounter = 0;								// Steer counter for setting update rate
 
-typedef enum {GREEN, ORANGE, RED} battery_state_t;
+typedef enum {GREEN, ORANGE, RED, NONE} battery_state_t;
 void ShowBatteryState(battery_state_t state);
 void BeepsBackwards(FlagStatus beepsBackwards);
 void ShutOff(void);
@@ -95,11 +96,18 @@ void poweroff(void) {
     buzzerFreq = (uint8_t)i;
     delay(100);
   }
+  buzzerFreq=0;
   // saveConfig();
+  ShowBatteryState(NONE);
+  gpio_bit_write(LED_X2_1_PORT, LED_X2_1_PIN, RESET);
+  gpio_bit_write(LED_X2_2_PORT, LED_X2_2_PIN, RESET);
   #ifdef SELF_HOLD_PIN
     gpio_bit_write(SELF_HOLD_PORT, SELF_HOLD_PIN, RESET);
   #endif
-  while(1) {}
+  while(1) {
+	watchdogReset();
+	delay(100);
+  }
 }
 
 //----------------------------------------------------------------------------
@@ -114,7 +122,7 @@ int main (void)
 	FlagStatus chargeStateLowActive = SET;
 	int16_t sendSlaveValue = 0;
 	uint8_t sendSlaveIdentifier = 0;
-	int8_t index = 8;
+	//int8_t index = 8;
   int16_t pwmSlave = 0;
 	int16_t scaledSpeed = 0;
 	int16_t scaledSteer  = 0;
@@ -149,10 +157,10 @@ int main (void)
 	#ifdef SELF_HOLD_PIN
 	gpio_bit_write(SELF_HOLD_PORT, SELF_HOLD_PIN, SET);
 	#endif
-
+	ShowBatteryState(NONE);
 	// Init usart master slave
     usart_init(USART0, USART0_BAUD); // Control
-    usart_init(USART1, USART1_BAUD); // Proxy
+    usart_init(REMOTE_UART, USART1_BAUD); // Proxy
 	#ifdef MASTER
     DEBUG_println(FST("\nSTART"));
 	#endif
@@ -172,15 +180,9 @@ int main (void)
 	// Device has 1,6 seconds to do all the initialization
 	// afterwards watchdog will be fired
 	fwdgt_counter_reload();
-	#ifdef MASTER
-	// Startup-Sound
-	for (; index >= 0; index--)
-	{
-    buzzerFreq = index;
-    delay(10);
-  }
-  buzzerFreq = 0;
-
+#ifdef MASTER
+	//Startup-Sound
+	beepShortMany(10, 1); 
 	// Wait until button is pressed
 	while (gpio_input_bit_get(BUTTON_PORT, BUTTON_PIN))
 	{
@@ -188,38 +190,32 @@ int main (void)
 		fwdgt_counter_reload();
 	}
 #endif
-/*
-      buzzerFreq = 5;
-      buzzerPattern = 1;
-*/
-	  //gpio_bit_write(LED_X2_GREEN_PORT, LED_X2_GREEN_PIN, SET);
-
 		// Enable channel output
 		setBldcEnable(SET);
     pwmMaster = CLAMP(100, -1000, 1000);
-		setBldcPWM(pwmMaster);
+		setBldcPWM(pwmMaster); //sets motor power before pid
 
 
-    #if 1
+    #if 0
     anglePid.set_point = 360*1;
     // speedPid.set_point = 150.0;
     target_pwm = 500;
     control_type = CT_ANGLE;
     #endif
-
-    gpio_bit_write(LED_X1_2_PORT, LED_X1_2_PIN, SET);
-while(1) {
-    uint32_t now = millis();
-	
-    if (now - last_millis > 500) { //debug
+bool state=0;
+while(1) 
+{
+    uint32_t now = millis(); 
+    if (now - last_millis > 1000) { //debug
         last_millis = now;
-        //gpio_bit_write(LED_X1_2_PORT, LED_X1_2_PIN, n++ & 1);
-        watchdogReset();
-        
-        debug_printf(" | I:%d (%d) [%d %d] U:%d (%d) | Pos: %d %d Ang:%d S:%d (%d)| PWM: %d  (%d %d %d) | PID: %f %f\n\r", 
+		watchdogReset();
+         gpio_bit_write(LED_X2_2_PORT, LED_X2_2_PIN, state); //big blue 1
+		state=!state;
+		gpio_bit_write(LED_X2_1_PORT, LED_X2_1_PIN, state); //big blue 2
+        /*debug_printf(" | I:%d (%d) [%d %d] U:%d (%d) | Pos: %d %d Ang:%d S:%d (%d)| PWM: %d  (%d %d %d) | PID: %f %f\n\r", 
         bldc_enableFin, curL_DC, offset_current_dc, curL_phaA, curL_phaB, ((int32_t)batVoltage * BAT_CALIB_REAL_VOLTAGE) / BAT_CALIB_ADC, batVoltage, wheel_pos, odom_l, wheel_angle, wheel_speed_rpm_filtered>>8, wheel_speed_rpm>>8, pwml, ul, vl, wl,
         angle_PID_error_old, angle_set_point_old);
-        
+        */
         //current_sp, shaft_velocity_sp, shaft_angle_sp, shaft_angle);
         //voltage.d, voltage.q, current.d, current.q);
 
@@ -255,10 +251,13 @@ while(1) {
 	      poweroff();
 		} else if (batVoltage < BAT_DEAD) {
 		  setError(EC_LOW_BATTERY);
+		  ShowBatteryState(RED);
 	      poweroff();
+		  
 	    } else if (system_error || remote_system_error) {                                           // 1 beep (low pitch): Motor error, disable motors
 	      bldc_enable = false;
-	      beepCount(1, 24, 1);
+	     // beepCount(1, 24, 1);
+		 ShowBatteryState(RED);
 	    } else if (TEMP_WARNING_ENABLE && board_temp_deg_c >= TEMP_WARNING) {                             // 5 beeps (low pitch): Mainboard temperature warning
 	      beepCount(5, 24, 1);
 		  ShowBatteryState(RED);
@@ -274,11 +273,9 @@ while(1) {
  	   }
 	
 		// Shut device off when button is pressed
-		if (gpio_input_bit_get(BUTTON_PORT, BUTTON_PIN))
-		{
-      while (gpio_input_bit_get(BUTTON_PORT, BUTTON_PIN)) {}
-			poweroff();
-    }
+		if (gpio_input_bit_get(BUTTON_PORT, BUTTON_PIN)) {
+      		while (gpio_input_bit_get(BUTTON_PORT, BUTTON_PIN)) {poweroff(); }
+    	}
 	}
  /* char tbuffer[256];
   uint8_t led_state = 0;
@@ -308,7 +305,7 @@ while(1) {
     led_state++;
 		//Delay(DELAY_IN_MAIN_LOOP);
     delay(100);*/
-
+	watchdogReset();
 }
 
 //----------------------------------------------------------------------------
@@ -318,19 +315,29 @@ void ShowBatteryState(battery_state_t state)
 {
   switch (state) {
     case GREEN:
-	    gpio_bit_write(LED_X2_1_PORT, LED_X2_1_PIN, SET);
-	    gpio_bit_write(LED_X2_1_PORT, LED_X2_2_PIN, RESET);
+	    gpio_bit_write(LED_X1_1_PORT, LED_X1_1_PIN, RESET);
+	    gpio_bit_write(LED_X1_2_PORT, LED_X1_2_PIN, SET);
+		gpio_bit_write(LED_X1_3_PORT, LED_X1_3_PIN, RESET);
       break; 
 
     case ORANGE:
-	    gpio_bit_write(LED_X2_1_PORT, LED_X2_1_PIN, SET);
-	    gpio_bit_write(LED_X2_1_PORT, LED_X2_2_PIN, SET);
+	    gpio_bit_write(LED_X1_1_PORT, LED_X1_1_PIN, SET);
+	    gpio_bit_write(LED_X1_2_PORT, LED_X1_2_PIN, SET);
+		gpio_bit_write(LED_X1_3_PORT, LED_X1_3_PIN, SET);
+	  
       break; 
 
     case RED:
-	    gpio_bit_write(LED_X2_1_PORT, LED_X2_1_PIN, RESET);
-	    gpio_bit_write(LED_X2_1_PORT, LED_X2_2_PIN, SET);
+	    gpio_bit_write(LED_X1_1_PORT, LED_X1_1_PIN, RESET);
+	    gpio_bit_write(LED_X1_2_PORT, LED_X1_2_PIN, RESET);
+		gpio_bit_write(LED_X1_3_PORT, LED_X1_3_PIN, SET);
       break; 
+
+	case NONE:
+	    gpio_bit_write(LED_X1_1_PORT, LED_X1_1_PIN, RESET);
+	    gpio_bit_write(LED_X1_2_PORT, LED_X1_2_PIN, RESET);
+		gpio_bit_write(LED_X1_3_PORT, LED_X1_3_PIN, RESET);
+	  break;
   }
 }
 /*

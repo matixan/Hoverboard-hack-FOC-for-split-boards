@@ -31,13 +31,18 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
+
 #include "gd32f1x0.h"
+
 
 // ################################################################################
 
 #define MASTER										  	// Select if firmware is for master or slave board
 //#define SLAVE 												// Select if firmware is for master or slave board
 
+// #include "boards/Hover1_defines.h"
+// #include "boards/YK201A_defines.h"
+#include "boards/TTSD22_defines.h"
 
 // ################################################################################
 

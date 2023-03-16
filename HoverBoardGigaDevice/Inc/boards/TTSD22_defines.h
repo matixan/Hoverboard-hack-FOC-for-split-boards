@@ -5,12 +5,12 @@
 #define MCU_TYPE "GD32F130C8T6"
 #define BOARD_TYPE "TTSD2.2"
 
-// LED X1 defines
-#define LED_X1_1_PIN GPIO_PIN_15
+// LED X1 defines comments for 6-LED PCB, 4-LED PCB lacks white wire - ORANGE LED
+#define LED_X1_1_PIN GPIO_PIN_12 //white wire ORANGE LED
 #define LED_X1_1_PORT GPIOA
-#define LED_X1_2_PIN GPIO_PIN_12
+#define LED_X1_2_PIN GPIO_PIN_15 //blue wire GREEN LED
 #define LED_X1_2_PORT GPIOA
-#define LED_X1_3_PIN GPIO_PIN_3
+#define LED_X1_3_PIN GPIO_PIN_3 //black wire RED LED
 #define LED_X1_3_PORT GPIOB
 
 // LED X2 defines
