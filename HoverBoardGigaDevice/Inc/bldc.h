@@ -83,6 +83,8 @@ extern int16_t curL_phaA;
 extern int16_t curL_phaB;
 extern int16_t offset_current_dc;
 extern int16_t odom_l;
+extern int16_t throttle_value;
+extern int16_t brake_value;
 
 extern long wheel_speed_rpm;
 extern long wheel_speed_rpm_filtered;

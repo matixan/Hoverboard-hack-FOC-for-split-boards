@@ -140,14 +140,16 @@ void GPIO_init(void)
 	gpio_mode_set(LED_X1_3_PORT, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, LED_X1_3_PIN);	
 	gpio_output_options_set(LED_X1_3_PORT, GPIO_OTYPE_PP, GPIO_OSPEED_10MHZ, LED_X1_3_PIN);
 
+	#ifdef LED_X2_1_PIN
 	// Init green LED
 	gpio_mode_set(LED_X2_1_PORT, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, LED_X2_1_PIN);	
 	gpio_output_options_set(LED_X2_1_PORT, GPIO_OTYPE_PP, GPIO_OSPEED_10MHZ, LED_X2_1_PIN);
-	
+	#endif
+	#ifdef LED_X2_2_PIN
 	// Init red LED
 	gpio_mode_set(LED_X2_2_PORT, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, LED_X2_2_PIN);	
 	gpio_output_options_set(LED_X2_2_PORT, GPIO_OTYPE_PP, GPIO_OSPEED_10MHZ, LED_X2_2_PIN);
-	
+	#endif
 	// Init orange LED
 	#ifdef LED_X2_3_PIN
 	gpio_mode_set(LED_X2_3_PORT, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, LED_X2_3_PIN);	
@@ -186,9 +188,13 @@ void GPIO_init(void)
 	gpio_mode_set(CURRENT_DC_PORT, GPIO_MODE_ANALOG, GPIO_PUPD_NONE, CURRENT_DC_PIN);
 	gpio_mode_set(PHASE_A_PORT, GPIO_MODE_ANALOG, GPIO_PUPD_NONE, PHASE_A_PIN);
 	gpio_mode_set(PHASE_B_PORT, GPIO_MODE_ANALOG, GPIO_PUPD_NONE, PHASE_B_PIN);
-	//gpio_mode_set(GPIOA, GPIO_MODE_ANALOG, GPIO_PUPD_NONE, GPIO_PIN_6);
-	//gpio_mode_set(GPIOB, GPIO_MODE_ANALOG, GPIO_PUPD_NONE, GPIO_PIN_0);
-	
+	#ifdef THROTTLE_PIN
+	gpio_mode_set(THROTTLE_PORT, GPIO_MODE_ANALOG, GPIO_PUPD_PULLDOWN, THROTTLE_PIN);
+	#endif
+	#ifdef BRAKE_PIN
+	gpio_mode_set(BRAKE_PORT, GPIO_MODE_ANALOG, GPIO_PUPD_NONE, BRAKE_PIN);
+	#endif
+
 	// Init debug pin
 	#ifdef DEBUG_PIN
 	gpio_mode_set(DEBUG_PORT , GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, DEBUG_PIN);	
@@ -254,6 +260,16 @@ void GPIO_init(void)
 	// Init charge state
 	#ifdef CHARGE_STATE_PIN
 	gpio_mode_set(CHARGE_STATE_PORT, GPIO_MODE_INPUT, GPIO_PUPD_PULLUP, CHARGE_STATE_PIN);
+	#endif
+
+	// Init user switch
+	#ifdef USER_SWITCH_PIN
+	gpio_mode_set(USER_SWITCH_PORT, GPIO_MODE_INPUT, GPIO_PUPD_PULLUP, USER_SWITCH_PIN);
+	#endif
+
+	// Init user button
+	#ifdef USER_BUTTON_PIN
+	gpio_mode_set(USER_BUTTON_PORT, GPIO_MODE_INPUT, GPIO_PUPD_PULLUP, USER_BUTTON_PIN);
 	#endif
 #endif
 }
@@ -383,12 +399,25 @@ void ADC_init(void)
 	dma_interrupt_enable(DMA_CH0, DMA_CHXCTL_FTFIE);
 	
 	// At least clear number of remaining data to be transferred by the DMA 
+	// dma_transfer_number_config(DMA_CH0, 5);
+	
+	#ifdef THROTTLE_CONTROL
+		#ifdef BRAKE_CONTROL
+		dma_transfer_number_config(DMA_CH0, 7);
+		dma_channel_enable(DMA_CH0); // Enable DMA channel 0
+		adc_channel_length_config(ADC_REGULAR_CHANNEL, 7);
+		adc_regular_channel_config(5, THROTTLE_CHANNEL, ADC_SAMPLETIME_13POINT5);
+		adc_regular_channel_config(6, BRAKE_CHANNEL, ADC_SAMPLETIME_13POINT5);
+		#else
+		dma_transfer_number_config(DMA_CH0, 6);
+		dma_channel_enable(DMA_CH0); // Enable DMA channel 0
+		adc_channel_length_config(ADC_REGULAR_CHANNEL, 6);
+		adc_regular_channel_config(5, THROTTLE_CHANNEL, ADC_SAMPLETIME_13POINT5);
+		#endif
+	#else
 	dma_transfer_number_config(DMA_CH0, 5);
-	
-	// Enable DMA channel 0
-	dma_channel_enable(DMA_CH0);
-	
 	adc_channel_length_config(ADC_REGULAR_CHANNEL, 5);
+	#endif
 	adc_regular_channel_config(0, VBATT_CHANNEL, ADC_SAMPLETIME_13POINT5);
 	adc_regular_channel_config(1, CURRENT_DC_CHANNEL, ADC_SAMPLETIME_13POINT5);
 	adc_regular_channel_config(2, PHASE_A_CHANNEL, ADC_SAMPLETIME_13POINT5);

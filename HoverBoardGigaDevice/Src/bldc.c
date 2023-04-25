@@ -48,6 +48,7 @@ extern uint8_t ctrlModReq;
 static int16_t curDC_max = (I_DC_MAX * A2BIT_CONV);
 int16_t curL_phaA = 0, curL_phaB = 0, curL_DC = 0;
 // int16_t curR_phaB = 0, curR_phaC = 0, curR_DC = 0;
+int16_t throttle_value = 0, brake_value = 0;
 
 
 ErrorCode system_error = EC_OK;

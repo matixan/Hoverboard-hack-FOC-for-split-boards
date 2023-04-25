@@ -43,14 +43,39 @@
 #define MAP(x, xMin, xMax, yMin, yMax) ((x - xMin) * (yMax - yMin) / (xMax - xMin) + yMin)
 
 // ADC buffer struct
-typedef struct
-{
-  uint16_t v_batt;
-	uint16_t current_dc;
-	uint16_t phase_a;
-	uint16_t phase_b;
-  uint16_t mcu_temp;
-} adc_buf_t;
+#ifdef THROTTLE_CONTROL
+		#ifdef BRAKE_CONTROL
+		typedef struct
+      {
+        uint16_t v_batt;
+        uint16_t current_dc;
+        uint16_t phase_a;
+        uint16_t phase_b;
+        uint16_t mcu_temp;
+        uint16_t throttle;
+        uint16_t brake;
+      } adc_buf_t;
+		#else
+		typedef struct
+      {
+        uint16_t v_batt;
+        uint16_t current_dc;
+        uint16_t phase_a;
+        uint16_t phase_b;
+        uint16_t mcu_temp;
+        uint16_t throttle;
+      } adc_buf_t;
+		#endif
+	#else
+    typedef struct
+    {
+      uint16_t v_batt;
+      uint16_t current_dc;
+      uint16_t phase_a;
+      uint16_t phase_b;
+      uint16_t mcu_temp;
+    } adc_buf_t;
+	#endif
 
 
 /*

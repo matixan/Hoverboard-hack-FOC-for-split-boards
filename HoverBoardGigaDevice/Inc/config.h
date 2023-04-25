@@ -42,7 +42,8 @@
 
 // #include "boards/Hover1_defines.h"
 // #include "boards/YK201A_defines.h"
-#include "boards/TTSD22_defines.h"
+// #include "boards/TTSD22_defines.h"
+#include "boards/TTSD22_Escooter_defines.h"
 
 // ################################################################################
 

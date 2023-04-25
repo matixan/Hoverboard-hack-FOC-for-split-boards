@@ -90,6 +90,7 @@ void watchdogReset() {
 void poweroff(void) {
   bldc_enable = 0;
   DEBUG_println(FST("-- Motors disabled --\n"));
+  DEBUG_println(FST("---- Turning off ----\n"));
   buzzerCount = 0;  // prevent interraction with beep counter
   buzzerPattern = 0;
   for (int i = 0; i < 8; i++) {
@@ -99,8 +100,6 @@ void poweroff(void) {
   buzzerFreq=0;
   // saveConfig();
   ShowBatteryState(NONE);
-  gpio_bit_write(LED_X2_1_PORT, LED_X2_1_PIN, RESET);
-  gpio_bit_write(LED_X2_2_PORT, LED_X2_2_PIN, RESET);
   #ifdef SELF_HOLD_PIN
     gpio_bit_write(SELF_HOLD_PORT, SELF_HOLD_PIN, RESET);
   #endif
@@ -154,7 +153,7 @@ int main (void)
 	GPIO_init();
 
 	// Activate self hold direct after GPIO-init
-	#ifdef SELF_HOLD_PIN
+	#if defined(SELF_HOLD_PIN) && defined(MASTER)  //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	gpio_bit_write(SELF_HOLD_PORT, SELF_HOLD_PIN, SET);
 	#endif
 	ShowBatteryState(NONE);
@@ -184,11 +183,13 @@ int main (void)
 	//Startup-Sound
 	beepShortMany(10, 1); 
 	// Wait until button is pressed
+	#ifdef MOMEMTARY_TURN_ON
 	while (gpio_input_bit_get(BUTTON_PORT, BUTTON_PIN))
 	{
 		// Reload watchdog while button is pressed
 		fwdgt_counter_reload();
 	}
+	#endif
 #endif
 		// Enable channel output
 		setBldcEnable(SET);
@@ -256,7 +257,7 @@ while(1)
 		  
 	    } else if (system_error || remote_system_error) {                                           // 1 beep (low pitch): Motor error, disable motors
 	      bldc_enable = false;
-	     // beepCount(1, 24, 1);
+	      beepCount(1, 24, 1);
 		 ShowBatteryState(RED);
 	    } else if (TEMP_WARNING_ENABLE && board_temp_deg_c >= TEMP_WARNING) {                             // 5 beeps (low pitch): Mainboard temperature warning
 	      beepCount(5, 24, 1);
@@ -271,11 +272,17 @@ while(1)
 	      beepCount(0, 0, 0);
 		  ShowBatteryState(GREEN);
  	   }
-	
+		#ifdef MOMENTARY_TURN_ON
 		// Shut device off when button is pressed
 		if (gpio_input_bit_get(BUTTON_PORT, BUTTON_PIN)) {
       		while (gpio_input_bit_get(BUTTON_PORT, BUTTON_PIN)) {poweroff(); }
     	}
+		#else
+		// Shut device off when ignition is released
+		if (!gpio_input_bit_get(BUTTON_PORT, BUTTON_PIN)) {
+	  		while (!gpio_input_bit_get(BUTTON_PORT, BUTTON_PIN)) {poweroff(); }
+		}
+		#endif
 	}
  /* char tbuffer[256];
   uint8_t led_state = 0;

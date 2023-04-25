@@ -4,7 +4,9 @@
 
 #define MCU_TYPE "GD32F130C8T6"
 #define BOARD_TYPE "TTSD2.2"
-#define MOMENTARY_TURN_ON
+//#define MOMENTARY_TURN_ON
+#define THROTTLE_CONTROL
+//#define BRAKE_CONTROL
 
 // LED X1 defines comments for 6-LED PCB, 4-LED PCB lacks white wire - ORANGE LED
 #define LED_X1_1_PIN GPIO_PIN_12 //white wire ORANGE LED
@@ -14,11 +16,11 @@
 #define LED_X1_3_PIN GPIO_PIN_3 //black wire RED LED
 #define LED_X1_3_PORT GPIOB
 
-// LED X2 defines
-#define LED_X2_1_PIN GPIO_PIN_1
-#define LED_X2_1_PORT GPIOA
-#define LED_X2_2_PIN GPIO_PIN_0
-#define LED_X2_2_PORT GPIOA
+// // LED X2 defines
+// #define LED_X2_1_PIN GPIO_PIN_1
+// #define LED_X2_1_PORT GPIOA
+// #define LED_X2_2_PIN GPIO_PIN_0
+// #define LED_X2_2_PORT GPIOA
 
 // Mosfet output
 #define MOSFET_OUT_PIN GPIO_PIN_13
@@ -78,6 +80,8 @@
 #define CURRENT_DC_PORT GPIOA
 #define CURRENT_DC_CHANNEL ADC_CHANNEL_6
 
+
+
 #define PHASE_A_PIN	GPIO_PIN_1
 #define PHASE_A_PORT GPIOB
 #define PHASE_A_CHANNEL ADC_CHANNEL_9
@@ -108,6 +112,28 @@
 // Charge state defines
 #define CHARGE_STATE_PIN GPIO_PIN_0
 #define CHARGE_STATE_PORT GPIOF
+
+#ifdef THROTTLE_CONTROL
+    // ADC throttle defines conected to X2.1 (mosfet is desoldered)
+    #define THROTTLE_PIN	GPIO_PIN_1
+    #define THROTTLE_PORT GPIOA
+    #define THROTTLE_CHANNEL ADC_CHANNEL_1
+#endif
+
+#ifdef BRAKE_CONTROL
+    // ADC brake defines conected to 
+    #define BRAKE_PIN	GPIO_PIN_
+    #define BRAKE_PORT GPIO
+    #define BRAKE_CHANNEL ADC_CHANNEL_
+#endif
+
+// User switch defines connected to L2
+#define USER_SWITCH_PIN GPIO_PIN_11
+#define USER_SWITCH_PORT GPIOA
+
+// User button defines conected to L1
+#define USER_BUTTON_PIN GPIO_PIN_7
+#define USER_BUTTON_PORT GPIOA
 #endif
 
 // Debug pin defines
