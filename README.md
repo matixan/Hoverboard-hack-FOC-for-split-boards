@@ -4,10 +4,15 @@ Its going to work... someday
 # Based on.  
 https://github.com/Candas1/Hoverboard-Firmware-Hack-Gen2
 
-Feel free to try(not burning your board) and contribute 
+Feel free to try at your own risk and contribute 
+
+## FOC not tested yet
+- [ ] Repair fried output stage(again...)
+- [x] added new ADC and input defines for future use
 
 ## What works?
 - [x] sin and motor reading
+- [x] ADC readings including between phase measurements
 - [x] CLI
 - [x] Properly turning on and off
 - [x] LED definition and control
